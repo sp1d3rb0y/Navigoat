@@ -1,7 +1,7 @@
 package fr.spiderboy.navigoat;
 
 /**
- * Created by pbni on 4/15/15.
+ * Created by spiderboy on 4/15/15.
  */
 public class APDU {
 

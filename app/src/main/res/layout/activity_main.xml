@@ -9,6 +9,6 @@
         android:layout_height="wrap_content"
         android:id="@+id/text_view_main"
         android:scrollbars="vertical"
-        android:maxLines="100"/>
+        android:maxLines="1000"/>
 
 </RelativeLayout>

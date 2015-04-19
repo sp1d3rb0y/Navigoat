@@ -1,7 +1,10 @@
 package fr.spiderboy.navigoat;
 
+import android.content.res.XmlResourceParser;
 import android.nfc.tech.IsoDep;
 import android.util.Log;
+
+import org.xmlpull.v1.XmlPullParser;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -9,11 +12,14 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.Stack;
 
 /**
- * Created by pbni on 4/15/15.
+ * Created by spiderboy on 4/15/15.
  */
 public class Navigo {
+
+    private XmlResourceParser xmlparser;
 
     public static enum FieldType {
         DF,
@@ -54,121 +60,66 @@ public class Navigo {
     private int id = 0;
     private IsoDep iso;
 
-    private Node card_struct;
+    private Node card_struct = null;
 
-    public Navigo(byte[] nid) {
+    public Navigo(byte[] nid, XmlResourceParser parser) {
         id = new BigInteger(nid).intValue();
-        card_struct = new Node("Calypso DF", FieldType.DF, new byte[]{0x20, 0x00});
-        ///////////////
-        /// Environment
-        ///////////////
-        Node env = new Node("Environment", FieldType.RECORD_EF, new byte[]{0x20, 0x01});
-        Node envAppVersNumber = new Node("EnvApplicationVersionNumber", FieldType.FINAL, 6, FinalType.APPLICATION_VERSION_NUMBER);
-        Node envBitMapGnrl = new Node("Bitmap generale", FieldType.BITMAP, 7);
-        Node envNetworkId = new Node("EnvNetworkId", FieldType.FINAL, 24, FinalType.INTEGER);
-        Node envAppIssuerId = new Node("EnvApplicationIssuerId", FieldType.FINAL, 8, FinalType.INTEGER);
-        Node envAppValidEndDate = new Node("EnvApplicationValidityEndDate", FieldType.FINAL, 14, FinalType.DATE);
-        Node envPayMethod = new Node("EnvPayMethod", FieldType.FINAL, 11, FinalType.PAY_METHOD);
-        Node envAuthenticator = new Node("EnvAuthenticator", FieldType.FINAL, 16, FinalType.INTEGER);
-        Node envSelectList = new Node("EnvSelectList", FieldType.FINAL, 32, FinalType.UNKNOWN);
-        Node envData = new Node("EnvData", FieldType.BITMAP, 2);
-        Node envDataCardStatus = new Node("EnvDataCardStatus", FieldType.FINAL, 1, FinalType.UNKNOWN);
-        Node envData2 = new Node("EnvData2", FieldType.FINAL, 0, FinalType.UNKNOWN);
-        envData.addSon(envDataCardStatus);
-        envData.addSon(envData2);
-        envBitMapGnrl.addSon(envNetworkId);
-        envBitMapGnrl.addSon(envAppIssuerId);
-        envBitMapGnrl.addSon(envAppValidEndDate);
-        envBitMapGnrl.addSon(envPayMethod);
-        envBitMapGnrl.addSon(envAuthenticator);
-        envBitMapGnrl.addSon(envSelectList);
-        envBitMapGnrl.addSon(envData);
-        env.addSon(envAppVersNumber);
-        env.addSon(envBitMapGnrl);
-        /// TODO : Add struct Holder
-        card_struct.addSon(env);
-        ////////////
-        /// EventLog
-        ////////////
-        Node events = new Node("EventLog", FieldType.RECORD_EF, new byte[]{0x20, 0x10});
-        Node evDateStamp = new Node("EventDateStamp", FieldType.FINAL, 14, FinalType.DATE);
-        Node evTimeStamp = new Node("EventTimeStamp", FieldType.FINAL, 11, FinalType.TIME);
-        Node evBitmap = new Node("EventBitmap", FieldType.BITMAP, 28);
-        Node evDisplayData = new Node("EventDisplayData",FieldType.FINAL, 8, FinalType.UNKNOWN);
-        Node evNetworkId = new Node("EventNetworkId", FieldType.FINAL, 24, FinalType.INTEGER);
-        Node evCode = new Node("EventCode", FieldType.FINAL, 8, FinalType.EVENT_CODE);
-        Node evResult = new Node("EventResult", FieldType.FINAL, 8, FinalType.EVENT_RESULT);
-        Node evServiceProvider = new Node("EventServiceProvider", FieldType.FINAL, 8, FinalType.EVENT_SERVICE_PROVIDER);
-        Node evNotOkCounter = new Node("EventNotOkCounter", FieldType.FINAL, 8, FinalType.UNKNOWN);
-        Node evSerialNumber = new Node("EventSerialNumber", FieldType.FINAL, 24, FinalType.UNKNOWN);
-        Node evDestination = new Node("EventDestination", FieldType.FINAL, 16, FinalType.UNKNOWN);
-        Node evLocationId = new Node("EventLocationId", FieldType.FINAL, 16, FinalType.LOCATION_ID);
-        Node evLocationGate = new Node("EventLocationGate", FieldType.FINAL, 8, FinalType.UNKNOWN);
-        Node evDevice = new Node("EventDevice", FieldType.FINAL, 16, FinalType.EVENT_DEVICE);
-        Node evRouteNumber = new Node("EventRouteNumber", FieldType.FINAL, 16, FinalType.ROUTE_NUMBER);
-        Node evRouteVariant = new Node("EventRouteVariant", FieldType.FINAL, 8, FinalType.UNKNOWN);
-        Node evJourneyRun = new Node("EventJourneyRun", FieldType.FINAL, 16, FinalType.INTEGER);
-        Node evVehicleId = new Node("EventVehicleId", FieldType.FINAL, 16, FinalType.INTEGER);
-        Node evVehicleClass = new Node("EventVehicleClass", FieldType.FINAL, 8, FinalType.UNKNOWN);
-        Node evLocationType = new Node("EventLocationType", FieldType.FINAL, 5, FinalType.UNKNOWN);
-        Node evEmployee = new Node("EventEmployee", FieldType.FINAL, 240, FinalType.UNKNOWN);
-        Node evLocationReference = new Node("EventLocationReference", FieldType.FINAL, 16, FinalType.UNKNOWN);
-        Node evJourneyInterchanges = new Node("EventJourneyInterchanges", FieldType.FINAL, 8, FinalType.UNKNOWN);
-        Node evPeriodJourneys = new Node("EventPeriodJourneys", FieldType.FINAL, 16, FinalType.UNKNOWN);
-        Node evTotalJourneys = new Node("EventTotalJourneys", FieldType.FINAL, 16, FinalType.UNKNOWN);
-        Node evJourneyDistance = new Node("EventJourneyDistance", FieldType.FINAL, 16, FinalType.UNKNOWN);
-        Node evPriceAmount = new Node("EventPriceAmount", FieldType.FINAL, 16, FinalType.UNKNOWN);
-        Node evPriceUnit = new Node("EventPriceUnit", FieldType.FINAL, 16, FinalType.UNKNOWN);
-        Node evContractPointer = new Node("EventContractPointer", FieldType.FINAL, 5, FinalType.INTEGER);
-        Node evAuthenticator = new Node("EventAuthenticator", FieldType.FINAL, 16, FinalType.UNKNOWN);
-        Node evData = new Node("EventData", FieldType.BITMAP, 5);
-        Node evDataDateFirstStamp = new Node("EventDataDateFirstStamp", FieldType.FINAL, 14, FinalType.DATE);
-        Node evDataTimeFirstStamp = new Node("EventDataTimeFirstStamp", FieldType.FINAL, 11, FinalType.TIME);
-        Node evDataSimulation = new Node("EventDataSimulation", FieldType.FINAL, 1, FinalType.UNKNOWN);
-        Node evDataTrip = new Node("EventDataTrip", FieldType.FINAL, 2, FinalType.UNKNOWN);
-        Node evDataRouteDirection = new Node("EventDataRouteDirection", FieldType.FINAL, 2, FinalType.UNKNOWN);
-        evData.addSon(evDataDateFirstStamp);
-        evData.addSon(evDataTimeFirstStamp);
-        evData.addSon(evDataSimulation);
-        evData.addSon(evDataTrip);
-        evData.addSon(evDataRouteDirection);
-        evBitmap.addSon(evDisplayData);
-        evBitmap.addSon(evNetworkId);
-        evBitmap.addSon(evCode);
-        evBitmap.addSon(evResult);
-        evBitmap.addSon(evServiceProvider);
-        evBitmap.addSon(evNotOkCounter);
-        evBitmap.addSon(evSerialNumber);
-        evBitmap.addSon(evDestination);
-        evBitmap.addSon(evLocationId);
-        evBitmap.addSon(evLocationGate);
-        evBitmap.addSon(evDevice);
-        evBitmap.addSon(evRouteNumber);
-        evBitmap.addSon(evRouteVariant);
-        evBitmap.addSon(evJourneyRun);
-        evBitmap.addSon(evVehicleId);
-        evBitmap.addSon(evVehicleClass);
-        evBitmap.addSon(evLocationType);
-        evBitmap.addSon(evEmployee);
-        evBitmap.addSon(evLocationReference);
-        evBitmap.addSon(evJourneyInterchanges);
-        evBitmap.addSon(evPeriodJourneys);
-        evBitmap.addSon(evTotalJourneys);
-        evBitmap.addSon(evJourneyDistance);
-        evBitmap.addSon(evPriceAmount);
-        evBitmap.addSon(evPriceUnit);
-        evBitmap.addSon(evContractPointer);
-        evBitmap.addSon(evAuthenticator);
-        evBitmap.addSon(evData);
-        events.addSon(evDateStamp);
-        events.addSon(evTimeStamp);
-        events.addSon(evBitmap);
-        card_struct.addSon(events);
-        /////////////
-        /// Contracts
-        /////////////
-        Node contracts = new Node("Contracts", FieldType.RECORD_EF, new byte[]{0x20, 0x20});
-        card_struct.addSon(contracts);
+        xmlparser = parser;
+        fillCardStruct();
+    }
+
+    private void fillCardStruct() {
+        Stack<Node> stack = new Stack<Node>();
+        String node = null;
+        Node current = null;
+
+        try {
+            int event = xmlparser.getEventType();
+            while (event != XmlPullParser.END_DOCUMENT) {
+                switch (event) {
+                    case XmlPullParser.START_DOCUMENT:
+                        break;
+                    case XmlPullParser.TEXT:
+                        current.setDescription(xmlparser.getText());
+                        break;
+                    case XmlPullParser.START_TAG:
+                        node = xmlparser.getName();
+                        if (node.equals("Node")) {
+                            String name = xmlparser.getAttributeValue(null, "name");
+                            String type = xmlparser.getAttributeValue(null, "type");
+                            String address = xmlparser.getAttributeValue(null, "address");
+                            String size = xmlparser.getAttributeValue(null, "size");
+                            String finalType = xmlparser.getAttributeValue(null, "final");
+                            if (address == null) {
+                                if (finalType == null) {
+                                    current = new Node(name, type, Integer.parseInt(size));
+                                } else {
+                                    current = new Node(name, type, Integer.parseInt(size), finalType);
+                                }
+                            } else {
+                                current = new Node(name, type, address);
+                            }
+                            stack.push(current);
+                        }
+                        break;
+                    case XmlPullParser.END_TAG:
+                        node = xmlparser.getName();
+                        if (node.equals("Node")) {
+                            Node n = stack.pop();
+                            if (stack.size() > 0) {
+                                stack.peek().addSon(n);
+                                current = null;
+                            } else {
+                                card_struct = n;
+                            }
+                        }
+                        break;
+                }
+                event = xmlparser.next();
+            }
+        } catch (Exception e) {
+            Log.e(MainActivity.dTag, "Error parsing card structure XML file: " + e.toString());
+        }
     }
 
     public String getId() {
@@ -284,9 +235,7 @@ public class Navigo {
                 break;
             case ROUTE_NUMBER:
                 /// TODO : Parse RER value
-                Log.i(MainActivity.dTag, value);
                 int ligne = Integer.parseInt(value, 2);
-                Log.i(MainActivity.dTag, Integer.toString(ligne));
                 if (ligne == 103)
                     res += "Ligne 3 bis";
                 else
@@ -310,7 +259,6 @@ public class Navigo {
     }
 
     private void parseNode(Node n, byte[] addr) throws IOException {
-        Log.i(MainActivity.dTag, "Parsing node " + n.getName());
         switch (n.getFieldType()) {
             case DF:
                 for (Node son : n.getSons()) {

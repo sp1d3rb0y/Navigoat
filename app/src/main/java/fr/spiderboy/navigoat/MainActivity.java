@@ -57,6 +57,8 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
+
+
     private void handleIntent(Intent intent) {
         String action = intent.getAction();
         if (NfcAdapter.ACTION_TECH_DISCOVERED.equals(action)) {
@@ -67,13 +69,12 @@ public class MainActivity extends ActionBarActivity {
                 if (tech.equals(sIsoDep) || tech.equals(sNfcB)) {
                     TextView mTextView = (TextView) findViewById(R.id.text_view_main);
                     mTextView.setText("Waiting for card...\n");
-                    card = new Navigo(tag.getId());
+                    card = new Navigo(tag.getId(), getResources().getXml(R.xml.card_struct));
                     addText("Found tag class " + tech);
                     new NfcReaderTask().execute(tag);
                     break;
                 }
             }
-            addText("Not a Navigo card.");
         }
     }
 

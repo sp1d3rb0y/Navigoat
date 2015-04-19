@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Card>
+    <Node name="Calypso DF" type="DF" address="2000">
+        <Node name="Environment" type="RecordEF" address="2001">
+            <Node name="EnvApplicationVersionNumber" type="Final" size="6" final="ApplicationVersionNumber">
+                <description>Numéro de version de l'application billetique</description>
+            </Node>
+            <Node name="Bitmap generale" type="Bitmap" size="7">
+                <Node name="EnvNetworkId" type="Final" size="24" final="Integer">
+                    <description>Identification du réseau</description>
+                </Node>
+                <Node name="EnvApplicationIssuerId" type="Final" size="8" final="Integer">
+                    <description>Identification de l’émetteur et créateur de l’application Billettique</description>
+                </Node>
+                <Node name="EnvApplicationValidityEndDate" type="Final" size="14" final="Date">
+                    <description>Date de fin de validité de l’application Billettique</description>
+                </Node>
+                <Node name="EnvPayMethod" type="Final" size="11" final="PayMethod">
+                    <description></description>
+                </Node>
+                <Node name="EnvAuthenticator" type="Final" size="16" final="Integer">
+                    <description></description>
+                </Node>
+                <Node name="EnvSelectList" type="Final" size="32" final="Unknown">
+                    <description>Bitmap de tableau de paramètre multiple</description>
+                </Node>
+                <Node name="EnvData" type="Bitmap" size="2">
+                    <Node name="EnvDataCardStatus" type="Final" size="1" final="Unknown">
+                        <description>Statut de la carte</description>
+                    </Node>
+                    <Node name="EnvData2" type="Final" size="0" final="Unknown">
+                        <description>Données supplémentaires</description>
+                    </Node>
+                </Node>
+            </Node>
+        </Node>
+        <Node name="EventLog" type="RecordEF" address="2010">
+            <Node name="EventDateStamp" type="Final" size="14" final="Date">
+                <description>Date de l’événement</description>
+            </Node>
+            <Node name="EventTimeStamp" type="Final" size="11" final="Time">
+                <description>Heure de l’événement</description>
+            </Node>
+            <Node name="EventBitmap" type="Bitmap" size="28">
+                <Node name="EventDisplayData" type="Final" size="8" final="Unknown">
+                    <description>Données pour l’affichage</description>
+                </Node>
+                <Node name="EventNetworkId" type="Final" size="24" final="Integer">
+                    <description>Réseau</description>
+                </Node>
+                <Node name="EventCode" type="Final" size="8" final="EventCode">
+                    <description>Nature de l’événement</description>
+                </Node>
+                <Node name="EventResult" type="Final" size="8" final="EventResult">
+                    <description>Code Résultat</description>
+                </Node>
+                <Node name="EventServiceProvider" type="Final" size="8" final="EventServiceProvider">
+                    <description>Identité de l’exploitant</description>
+                </Node>
+                <Node name="EventNotokCounter" type="Final" size="8" final="Unknown">
+                    <description>Compteur événements anormaux</description>
+                </Node>
+                <Node name="EventSerialNumber" type="Final" size="24" final="Unknown">
+                    <description>Numéro de série de l’événement</description>
+                </Node>
+                <Node name="EventDestination" type="Final" size="16" final="Unknown">
+                    <description>Destination de l’usager</description>
+                </Node>
+                <Node name="EventLocationId" type="Final" size="16" final="LocationId">
+                    <description>Lieu de l’événement</description>
+                </Node>
+                <Node name="EventLocationGate" type="Final" size="8" final="Unknown">
+                    <description>Identification du passage</description>
+                </Node>
+                <Node name="EventDevice" type="Final" size="16" final="EventDevice">
+                    <description>Identificateur de l’équipement</description>
+                </Node>
+                <Node name="EventRouteNumber" type="Final" size="16" final="RouteNumber">
+                    <description>Référence de la ligne</description>
+                </Node>
+                <Node name="EventRouteVariant" type="Final" size="8" final="Unknown">
+                    <description>Référence d’une variante de la ligne</description>
+                </Node>
+                <Node name="EventJourneyRun" type="Final" size="16" final="Integer">
+                    <description>Référence de la mission</description>
+                </Node>
+                <Node name="EventVehicleId" type="Final" size="16" final="Integer">
+                    <description>Identificateur du véhicule</description>
+                </Node>
+                <Node name="EventVehicleClass" type="Final" size="8" final="Unknown">
+                    <description>Type de véhicule utilisé</description>
+                </Node>
+                <Node name="EventLocationType" type="Final" size="5" final="Unknown">
+                    <description>Type d’endroit (gare, arrêt de bus), </description>
+                </Node>
+                <Node name="EventEmployee" type="Final" size="240" final="Unknown">
+                    <description>Code de l’employé impliqué</description>
+                </Node>
+                <Node name="EventLocationReference" type="Final" size="16" final="Unknown">
+                    <description>Référence du lieu de l’événement</description>
+                </Node>
+                <Node name="EventJourneyInterchanges" type="Final" size="8" final="Unknown">
+                    <description>Nombre de correspondances</description>
+                </Node>
+                <Node name="EventPeriodJourneys" type="Final" size="16" final="Unknown">
+                    <description>Nombre de voyage effectués</description>
+                </Node>
+                <Node name="EventTotalJourneys" type="Final" size="16" final="Unknown">
+                    <description>Nombre total de voyages autorisés</description>
+                </Node>
+                <Node name="EventJourneyDistance" type="Final" size="16" final="Unknown">
+                    <description>Distance parcourue</description>
+                </Node>
+                <Node name="EventPriceAmount" type="Final" size="16" final="Unknown">
+                    <description>Montant en jeu lors de l’événement</description>
+                </Node>
+                <Node name="EventPriceUnit" type="Final" size="16" final="Unknown">
+                    <description>Unité de montant en jeu</description>
+                </Node>
+                <Node name="EventContractPointer" type="Final" size="5" final="Integer">
+                    <description>Référence du contrat concerné</description>
+                </Node>
+                <Node name="EventAuthenticator" type="Final" size="16" final="Unknown">
+                    <description>Code de sécurité</description>
+                </Node>
+                <Node name="EventData" type="Bitmap" size="5">
+                    <Node name="EventDataDateFirstStamp" type="Final" size="14" final="Date">
+                        <description>Date de la première montée</description>
+                    </Node>
+                    <Node name="EventDataTimeFirstStamp" type="Final" size="11" final="Time">
+                        <description>Heure de la première montée</description>
+                    </Node>
+                    <Node name="EventDataSimulation" type="Final" size="1" final="Unknown">
+                        <description>Dernière validation (0=normal, 1=dégradé), </description>
+                    </Node>
+                    <Node name="EventDataTrip" type="Final" size="2" final="Unknown">
+                        <description>Tronçon</description>
+                    </Node>
+                    <Node name="EventDataRouteDirection" type="Final" size="2" final="Unknown">
+                        <description>Sens</description>
+                    </Node>
+                </Node>
+            </Node>
+        </Node>
+        <Node name="Contracts" type="RecordEF" address="2020">
+        </Node>
+        <Node name="Contract List" type="RecordEF" address="2030">
+        </Node>
+        <Node name="Special Events" type="RecordEF" address="2040">
+        </Node>
+    </Node>
+</Card>
