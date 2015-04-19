@@ -12,14 +12,14 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Stack;
 
 /**
  * Created by spiderboy on 4/15/15.
  */
 public class Navigo {
-
-    private XmlResourceParser xmlparser;
 
     public static enum FieldType {
         DF,
@@ -59,13 +59,42 @@ public class Navigo {
 
     private int id = 0;
     private IsoDep iso;
-
+    private Map<String, String> stations;
     private Node card_struct = null;
+    private XmlResourceParser xmlparser_card;
+    private XmlResourceParser xmlparser_stations;
 
-    public Navigo(byte[] nid, XmlResourceParser parser) {
+    public Navigo(byte[] nid, XmlResourceParser parser_card, XmlResourceParser parser_stations) {
         id = new BigInteger(nid).intValue();
-        xmlparser = parser;
+        xmlparser_card = parser_card;
+        xmlparser_stations = parser_stations;
         fillCardStruct();
+        stations = new HashMap<String, String> ();
+        fillStations();
+    }
+
+    private void fillStations() {
+        try {
+            String node = null;
+            int event = xmlparser_stations.getEventType();
+
+            while (event != XmlPullParser.END_DOCUMENT) {
+                switch (event) {
+                    case XmlPullParser.START_TAG:
+                        node = xmlparser_stations.getName();
+                        if (node.equals("station")) {
+                            /// TODO : Handle train type
+                            String name = xmlparser_stations.getAttributeValue(null, "name");
+                            String code = xmlparser_stations.getAttributeValue(null, "code");
+                            stations.put(code, name);
+                        }
+                        break;
+                }
+                event = xmlparser_stations.next();
+            }
+        } catch (Exception e) {
+            Log.e(MainActivity.dTag, "Error parsing stations XML file: " + e.getMessage());
+        }
     }
 
     private void fillCardStruct() {
@@ -74,22 +103,22 @@ public class Navigo {
         Node current = null;
 
         try {
-            int event = xmlparser.getEventType();
+            int event = xmlparser_card.getEventType();
             while (event != XmlPullParser.END_DOCUMENT) {
                 switch (event) {
                     case XmlPullParser.START_DOCUMENT:
                         break;
                     case XmlPullParser.TEXT:
-                        current.setDescription(xmlparser.getText());
+                        current.setDescription(xmlparser_card.getText());
                         break;
                     case XmlPullParser.START_TAG:
-                        node = xmlparser.getName();
+                        node = xmlparser_card.getName();
                         if (node.equals("Node")) {
-                            String name = xmlparser.getAttributeValue(null, "name");
-                            String type = xmlparser.getAttributeValue(null, "type");
-                            String address = xmlparser.getAttributeValue(null, "address");
-                            String size = xmlparser.getAttributeValue(null, "size");
-                            String finalType = xmlparser.getAttributeValue(null, "final");
+                            String name = xmlparser_card.getAttributeValue(null, "name");
+                            String type = xmlparser_card.getAttributeValue(null, "type");
+                            String address = xmlparser_card.getAttributeValue(null, "address");
+                            String size = xmlparser_card.getAttributeValue(null, "size");
+                            String finalType = xmlparser_card.getAttributeValue(null, "final");
                             if (address == null) {
                                 if (finalType == null) {
                                     current = new Node(name, type, Integer.parseInt(size));
@@ -103,7 +132,7 @@ public class Navigo {
                         }
                         break;
                     case XmlPullParser.END_TAG:
-                        node = xmlparser.getName();
+                        node = xmlparser_card.getName();
                         if (node.equals("Node")) {
                             Node n = stack.pop();
                             if (stack.size() > 0) {
@@ -115,10 +144,10 @@ public class Navigo {
                         }
                         break;
                 }
-                event = xmlparser.next();
+                event = xmlparser_card.next();
             }
         } catch (Exception e) {
-            Log.e(MainActivity.dTag, "Error parsing card structure XML file: " + e.toString());
+            Log.e(MainActivity.dTag, "Error parsing card structure XML file: " + e.getMessage());
         }
     }
 
@@ -159,10 +188,9 @@ public class Navigo {
                 }
                 break;
             case FINAL:
-                for (int i = 0; i < level; i++) {
-                    res += " ";
-                }
                 if (n.getValue(file_number) != "") {
+                    for (int i = 0; i < level; i++)
+                        res += " ";
                     res += dumpFinal(n, file_number);
                 }
                 break;
@@ -240,6 +268,40 @@ public class Navigo {
                     res += "Ligne 3 bis";
                 else
                     res += "Ligne " + ligne;
+                break;
+            case AMOUNT:
+                float amount = Integer.parseInt(value, 2);
+                res += amount / 100.0;
+                res += " euros";
+                break;
+            case EVENT_RESULT:
+                int result = Integer.parseInt(value, 2);
+                switch (result) {
+                    case 48:
+                        res += "Double validation en entrée";
+                        break;
+                    case 49:
+                        res += "Zone invalide";
+                        break;
+                    case 53:
+                        res += "Abonnement périmé";
+                        break;
+                    case 69:
+                        res += "Double validation en sortie";
+                        break;
+                    default:
+                        res += "Unkown";
+                        break;
+                }
+                break;
+            case LOCATION_ID:
+                int zone = Integer.parseInt(value.substring(0,7), 2);
+                int location = Integer.parseInt(value.substring(7,12), 2);
+                String code = (zone < 10) ? "0" : "";
+                code += zone + "-";
+                code += (location < 10) ? "0" : "";
+                code += location;
+                res += stations.get(code);
                 break;
             default:
                 res += value;

@@ -69,7 +69,8 @@ public class MainActivity extends ActionBarActivity {
                 if (tech.equals(sIsoDep) || tech.equals(sNfcB)) {
                     TextView mTextView = (TextView) findViewById(R.id.text_view_main);
                     mTextView.setText("Waiting for card...\n");
-                    card = new Navigo(tag.getId(), getResources().getXml(R.xml.card_struct));
+                    card = new Navigo(tag.getId(), getResources().getXml(R.xml.card_struct),
+                                        getResources().getXml(R.xml.stations));
                     addText("Found tag class " + tech);
                     new NfcReaderTask().execute(tag);
                     break;
