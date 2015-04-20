@@ -4,19 +4,29 @@ import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.nfc.tech.IsoDep;
 import android.nfc.tech.NfcB;
 import android.os.AsyncTask;
+import android.preference.CheckBoxPreference;
+import android.preference.Preference;
+import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.ViewSwitcher;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -31,6 +41,24 @@ public class MainActivity extends ActionBarActivity {
         setContentView(R.layout.activity_main);
 
         mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
+
+        /// Listener for verbose checkbox
+        SharedPreferences.OnSharedPreferenceChangeListener changeListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+            @Override
+            public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+                if (key.equals("verbose_checkbox")) {
+                    ViewSwitcher switcher = (ViewSwitcher) findViewById(R.id.profileSwitcher);
+                    switcher.showNext();
+                }
+            }
+        };
+
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        if (!preferences.getBoolean("verbose_checkbox", true)) {
+            ViewSwitcher switcher = (ViewSwitcher) findViewById(R.id.profileSwitcher);
+            switcher.showNext();
+        }
+        preferences.registerOnSharedPreferenceChangeListener(changeListener);
 
         TextView mTextView = (TextView) findViewById(R.id.text_view_main);
         mTextView.setMovementMethod(new ScrollingMovementMethod());
@@ -117,6 +145,8 @@ public class MainActivity extends ActionBarActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            Intent i = new Intent(this, SettingsActivity.class);
+            startActivityForResult(i, 0);
             return true;
         }
 
