@@ -100,7 +100,9 @@ public class MainActivity extends ActionBarActivity {
                     card = new Navigo(tag.getId(), getResources().getXml(R.xml.card_struct),
                                         getResources().getXml(R.xml.stations));
                     addText("Found tag class " + tech);
-                    new NfcReaderTask().execute(tag);
+                    synchronized (this) {
+                        new NfcReaderTask().execute(tag);
+                    }
                     break;
                 }
             }
@@ -211,6 +213,7 @@ public class MainActivity extends ActionBarActivity {
 
         private String readTag(IsoDep iso) throws IOException {
             final IsoDep isodep = iso;
+            String res = "";
             isodep.connect();
             isodep.setTimeout(5000);
             if (isodep.isConnected()) {
@@ -225,7 +228,7 @@ public class MainActivity extends ActionBarActivity {
                                 addText("Dumping card...");
                             }
                         });
-                        wait(500);
+                        wait(1000);
                         return card.dump();
                     }
                 } catch (InterruptedException e) {

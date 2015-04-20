@@ -316,7 +316,7 @@ public class Navigo {
         try {
             parseNode(card_struct, new byte[]{});
         } catch (Exception e) {
-            Log.e(MainActivity.dTag, "Exception during parse node: " + e.getMessage());
+            Log.e(MainActivity.dTag, "Exception during parse node: " + e.toString());
         }
     }
 
@@ -373,6 +373,7 @@ public class Navigo {
     }
 
     private int parseFileRecord(Node n, String res, int pos, int file_number) {
+        Log.i(MainActivity.dTag, "Parsing file record " + file_number + " for node " + n.getName());
         switch (n.getFieldType()) {
             case RECORD_EF:
                 for (Node son : n.getSons()) {
@@ -380,6 +381,8 @@ public class Navigo {
                 }
                 return 0;
             case BITMAP:
+                if (pos + n.getSize() >= res.length())
+                    return 0;
                 String bitmap = res.substring(pos, pos + n.getSize());
                 ArrayList<Node> sons = n.getSons();
                 int j = 0;
@@ -392,6 +395,8 @@ public class Navigo {
                 }
                 return pos;
             case FINAL:
+                if (pos + n.getSize() >= res.length())
+                    return 0;
                 String val = res.substring(pos, pos + n.getSize());
                 n.setValue(val, file_number);
                 return n.getSize();
