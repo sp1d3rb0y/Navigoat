@@ -34,7 +34,7 @@ public class Navigo {
         STRUCT_REPEATED,
         REVERSED_STRUCT_REPEATED,
         FINAL_WITH_HEADER,
-    };
+    }
 
     public static enum FinalType {
         UNKNOWN,
@@ -55,7 +55,7 @@ public class Navigo {
         TRAIN_STATION_ID,
         EVENT_DEVICE,
         HOLDER_DATA_CARD_STATUS,
-    };
+    }
 
     private int id = 0;
     private IsoDep iso;
@@ -63,6 +63,7 @@ public class Navigo {
     private Node card_struct = null;
     private XmlResourceParser xmlparser_card;
     private XmlResourceParser xmlparser_stations;
+    private String dump = "";
 
     public Navigo(byte[] nid, XmlResourceParser parser_card, XmlResourceParser parser_stations) {
         id = new BigInteger(nid).intValue();
@@ -75,7 +76,7 @@ public class Navigo {
 
     private void fillStations() {
         try {
-            String node = null;
+            String node = "";
             int event = xmlparser_stations.getEventType();
 
             while (event != XmlPullParser.END_DOCUMENT) {
@@ -99,7 +100,7 @@ public class Navigo {
 
     private void fillCardStruct() {
         Stack<Node> stack = new Stack<Node>();
-        String node = null;
+        String node = "";
         Node current = null;
 
         try {
@@ -155,12 +156,44 @@ public class Navigo {
         return "0" + id;
     }
 
-    public String dump() {
+    public void dump() {
         String res = "===============================\n";
         res += "UID: " + getId() + "\n";
         res += dumpNode(card_struct, 0, 1);
         res += "===============================\n";
+        dump = res;
+    }
+
+    public String getDump() {
+        return this.dump;
+    }
+
+    public ArrayList<String> getElements() {
+        ArrayList<String> res = new ArrayList<String> ();
+        if (card_struct != null) {
+            res.add("UID: " + getId());
+            Node lignes = findNode(card_struct, "EventRouteNumber");
+            if (lignes != null) {
+                for (int i = 1; i <= lignes.getNumber_of_files(); ++i)
+                    res.add(lignes.getInterpretedValue(i));
+            }
+        }
         return res;
+    }
+
+    private Node findNode(Node n, String name) {
+        if (n != null) {
+            if (n.getName().equals(name)) {
+                return n;
+            }
+            for (Node son : n.getSons()) {
+                Node res = findNode(son, name);
+                if (res != null) {
+                    return res;
+                }
+            }
+        }
+        return null;
     }
 
     private String dumpNode(Node n, int level, int file_number) {
@@ -188,7 +221,7 @@ public class Navigo {
                 }
                 break;
             case FINAL:
-                if (n.getValue(file_number) != "") {
+                if (!n.getValue(file_number).equals("")) {
                     for (int i = 0; i < level; i++)
                         res += " ";
                     res += dumpFinal(n, file_number);
@@ -200,6 +233,8 @@ public class Navigo {
         return res;
     }
 
+    /// TODO : Interpreter class with static functions
+    /// TODO : SetInterpreted value for each node and final type
     private String dumpFinal(Node n, int file_number) {
         String value = n.getValue(file_number);
         String res = " > " + n.getName() + ": ";
@@ -215,7 +250,8 @@ public class Navigo {
                 cal.set(1997, Calendar.JANUARY, 1);
                 cal.add(Calendar.DATE, date_int);
                 SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-                res += sdf.format(cal.getTime());
+                n.setInterpretedValue(sdf.format(cal.getTime()), file_number);
+                res += n.getInterpretedValue(file_number);
                 break;
             case TIME:
                 if (value.length() == 0) {
@@ -265,9 +301,10 @@ public class Navigo {
                 /// TODO : Parse RER value
                 int ligne = Integer.parseInt(value, 2);
                 if (ligne == 103)
-                    res += "Ligne 3 bis";
+                    n.setInterpretedValue("Ligne 3 bis", file_number);
                 else
-                    res += "Ligne " + ligne;
+                    n.setInterpretedValue("Ligne " + ligne, file_number);
+                res += n.getInterpretedValue(file_number);
                 break;
             case AMOUNT:
                 float amount = Integer.parseInt(value, 2);
@@ -373,7 +410,6 @@ public class Navigo {
     }
 
     private int parseFileRecord(Node n, String res, int pos, int file_number) {
-        Log.i(MainActivity.dTag, "Parsing file record " + file_number + " for node " + n.getName());
         switch (n.getFieldType()) {
             case RECORD_EF:
                 for (Node son : n.getSons()) {

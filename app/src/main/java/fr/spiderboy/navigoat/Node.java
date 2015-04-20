@@ -1,6 +1,5 @@
 package fr.spiderboy.navigoat;
 
-import android.util.Log;
 import java.util.ArrayList;
 
 /**
@@ -15,6 +14,7 @@ public class Node {
     private byte[] address;
     private ArrayList<Node> content;
     private ArrayList<String> value;
+    private ArrayList<String> interpretedValue;
     private String description;
 
     public Node(String n, String feType, int size) {
@@ -23,6 +23,7 @@ public class Node {
         parseFeType(feType);
         content = new ArrayList<Node>();
         value = new ArrayList<String>();
+        interpretedValue = new ArrayList<String>();
     }
 
     public Node(String n, String feType, int size, String faType) {
@@ -32,6 +33,7 @@ public class Node {
         parseFaType(faType);
         content = new ArrayList<Node>();
         value = new ArrayList<String>();
+        interpretedValue = new ArrayList<String>();
     }
 
     public Node(String n, String feType, String addr) {
@@ -39,6 +41,7 @@ public class Node {
         parseFeType(feType);
         content = new ArrayList<Node>();
         value = new ArrayList<String>();
+        interpretedValue = new ArrayList<String>();
         /// Parse hex string
         int len = addr.length();
         this.address = new byte[len / 2];
@@ -48,30 +51,6 @@ public class Node {
         }
     }
 
-    public Node(String n, Navigo.FieldType feType, byte[] add) {
-        name = n;
-        fieldType = feType;
-        address = add;
-        content = new ArrayList<Node>();
-        value = new ArrayList<String>();
-    }
-
-    public Node(String n, Navigo.FieldType feType, int size) {
-        name = n;
-        fieldType = feType;
-        this.size = size;
-        content = new ArrayList<Node>();
-        value = new ArrayList<String>();
-    }
-
-    public Node(String n, Navigo.FieldType feType, int size, Navigo.FinalType faType) {
-        name = n;
-        fieldType = feType;
-        this.size = size;
-        content = new ArrayList<Node>();
-        finalType = faType;
-    }
-
     public void setValue(String val, int file_number) {
         if (value.size() < file_number) {
             value.add(val);
@@ -79,6 +58,12 @@ public class Node {
         } else {
             value.set(file_number - 1, val);
         }
+    }
+
+    public void setInterpretedValue(String val, int file_number) {
+        if (interpretedValue.size() < this.number_of_files)
+            interpretedValue.addAll(value);
+        interpretedValue.set(file_number - 1, val);
     }
 
     private void parseFeType(String feType) {
@@ -167,6 +152,12 @@ public class Node {
         return value.get(file_number - 1);
     }
 
+    public String getInterpretedValue(int file_number) {
+        if (value.size() < file_number)
+            return "";
+        return interpretedValue.get(file_number - 1);
+    }
+
     public Navigo.FieldType getFieldType() {
         return fieldType;
     }
@@ -193,5 +184,9 @@ public class Node {
 
     public void setDescription(String desc) {
         description = desc;
+    }
+
+    public String getDescription() {
+        return description;
     }
 }

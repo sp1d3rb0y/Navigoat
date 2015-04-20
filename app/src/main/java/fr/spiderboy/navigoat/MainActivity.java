@@ -10,22 +10,17 @@ import android.nfc.Tag;
 import android.nfc.tech.IsoDep;
 import android.nfc.tech.NfcB;
 import android.os.AsyncTask;
-import android.preference.CheckBoxPreference;
-import android.preference.Preference;
 import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.ViewSwitcher;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 
@@ -34,6 +29,7 @@ public class MainActivity extends ActionBarActivity {
     private NfcAdapter mNfcAdapter;
     public static final String dTag = "Navigoat";
     private Navigo card;
+    private CustomListAdapter listAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +37,11 @@ public class MainActivity extends ActionBarActivity {
         setContentView(R.layout.activity_main);
 
         mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
+
+        ListView lView = (ListView) findViewById(R.id.listView);
+        listAdapter = new CustomListAdapter(this);
+        lView.setAdapter(listAdapter);
+        listAdapter.add("Scan your card !");
 
         /// Listener for verbose checkbox
         SharedPreferences.OnSharedPreferenceChangeListener changeListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
@@ -85,6 +86,10 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
+    private void addElement(String text) {
+        listAdapter.add(text);
+    }
+
 
 
     private void handleIntent(Intent intent) {
@@ -97,6 +102,7 @@ public class MainActivity extends ActionBarActivity {
                 if (tech.equals(sIsoDep) || tech.equals(sNfcB)) {
                     TextView mTextView = (TextView) findViewById(R.id.text_view_main);
                     mTextView.setText("Waiting for card...\n");
+                    listAdapter.clear();
                     card = new Navigo(tag.getId(), getResources().getXml(R.xml.card_struct),
                                         getResources().getXml(R.xml.stations));
                     addText("Found tag class " + tech);
@@ -213,7 +219,6 @@ public class MainActivity extends ActionBarActivity {
 
         private String readTag(IsoDep iso) throws IOException {
             final IsoDep isodep = iso;
-            String res = "";
             isodep.connect();
             isodep.setTimeout(5000);
             if (isodep.isConnected()) {
@@ -226,10 +231,13 @@ public class MainActivity extends ActionBarActivity {
                                 addText("Parsing card...");
                                 card.parseIsoDep(isodep);
                                 addText("Dumping card...");
+                                card.dump();
+                                for (String elt : card.getElements())
+                                    addElement(elt);
                             }
                         });
                         wait(1000);
-                        return card.dump();
+                        return card.getDump();
                     }
                 } catch (InterruptedException e) {
                     return "Thread interrupted: " + e.getMessage();
