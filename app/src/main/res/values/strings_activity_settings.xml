@@ -9,5 +9,11 @@
     <string name="pref_title_verbose_mode">Enable verbose mode</string>
     <string name="pref_description_verbose_mode">Enable verbose card dumping
     </string>
+    <string name="pref_title_online_mode">Enable online mode (not implemented)</string>
+    <string name="pref_description_online_mode">Fetch line logos from RATP open API (not implemented yet)
+    </string>
+    <string name="pref_title_dumps_location">Dumps location</string>
+    <string name="pref_description_dumps_location">Dumps filesystem location
+    </string>
 
 </resources>

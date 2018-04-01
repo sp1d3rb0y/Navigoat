@@ -1,9 +1,21 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <EditTextPreference
+        android:defaultValue="/sdcard/Navigoat/"
+        android:key="dumps_location"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:summary="@string/pref_description_dumps_location"
+        android:title="@string/pref_title_dumps_location" />
     <CheckBoxPreference
         android:key="verbose_checkbox"
         android:title="@string/pref_title_verbose_mode"
         android:summary="@string/pref_description_verbose_mode"
-        android:defaultValue="true" />
+        android:defaultValue="false" />
+    <CheckBoxPreference
+        android:key="online_mode"
+        android:title="@string/pref_title_online_mode"
+        android:summary="@string/pref_description_online_mode"
+        android:defaultValue="false" />
 
 </PreferenceScreen>
