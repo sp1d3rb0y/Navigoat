@@ -59,18 +59,21 @@ public class Navigo {
 
     private int id = 0;
     private IsoDep iso;
-    private Map<String, String> stations;
+    private Map<String, String> metro_stations;
+    private Map<String, String> train_stations;
     private Node card_struct = null;
     private XmlResourceParser xmlparser_card;
     private XmlResourceParser xmlparser_stations;
     private String dump = "";
+    private String current_event_code = "";
 
     public Navigo(byte[] nid, XmlResourceParser parser_card, XmlResourceParser parser_stations) {
         id = new BigInteger(nid).intValue();
         xmlparser_card = parser_card;
         xmlparser_stations = parser_stations;
         fillCardStruct();
-        stations = new HashMap<String, String> ();
+        metro_stations = new HashMap<String, String> ();
+        train_stations = new HashMap<String, String> ();
         fillStations();
     }
 
@@ -84,10 +87,14 @@ public class Navigo {
                     case XmlPullParser.START_TAG:
                         node = xmlparser_stations.getName();
                         if (node.equals("station")) {
-                            /// TODO : Handle train type
+                            String type = xmlparser_stations.getAttributeValue(null, "type");
                             String name = xmlparser_stations.getAttributeValue(null, "name");
                             String code = xmlparser_stations.getAttributeValue(null, "code");
-                            stations.put(code, name);
+                            if (type.equals("metro")) {
+                                metro_stations.put(code, name);
+                            } else {
+                                train_stations.put(code, name);
+                            }
                         }
                         break;
                 }
@@ -168,14 +175,70 @@ public class Navigo {
         return this.dump;
     }
 
-    public ArrayList<String> getElements() {
-        ArrayList<String> res = new ArrayList<String> ();
-        if (card_struct != null) {
-            res.add("UID: " + getId());
-            Node lignes = findNode(card_struct, "EventRouteNumber");
-            if (lignes != null) {
-                for (int i = 1; i <= lignes.getNumber_of_files(); ++i)
-                    res.add(lignes.getInterpretedValue(i));
+    public ArrayList<CustomListAdapter.Element> getContracts() {
+        Node root = findNode(card_struct, "Contracts");
+        ArrayList<CustomListAdapter.Element> res = new ArrayList<> ();
+        if (root != null) {
+            Node contract_sn = findNode(root, "ContractSerialNumber");
+            Node contract_price = findNode(root, "ContractPriceAmount");
+            Node contract_start = findNode(root, "ContractValidityStartDate");
+            Node contract_end = findNode(root, "ContractValidityEndDate");
+            if (contract_start != null && contract_end != null) {
+                for (int i = 1; i <= contract_start.getNumber_of_files(); ++i) {
+                    CustomListAdapter.Element elt;
+                    String title = "No uid";
+                    String content = "Du " + contract_start.getInterpretedValue(i) + " au " + contract_end.getInterpretedValue(i);
+                    if (contract_sn != null && !contract_sn.getInterpretedValue(i).equals("")) {
+                        title = contract_sn.getInterpretedValue(i);
+                    }
+                    if (contract_price != null && !contract_price.getInterpretedValue(i).equals("")) {
+                        content += " (" + contract_price.getInterpretedValue(i) + ")";
+                    }
+                    elt = new CustomListAdapter.Element(title, content, "");
+                    res.add(elt);
+                }
+            }
+        }
+        return res;
+    }
+
+    public ArrayList<CustomListAdapter.Element> getEvents() {
+        Node root = findNode(card_struct, "EventLog");
+        ArrayList<CustomListAdapter.Element> res = new ArrayList<> ();
+        if (root != null) {
+            Node lines = findNode(root, "EventRouteNumber");
+            Node stations = findNode(root, "EventLocationId");
+            Node dates = findNode(root, "EventDateStamp");
+            Node times = findNode(root, "EventTimeStamp");
+            if (lines != null && stations != null && dates != null && times != null) {
+                for (int i = 1; i <= dates.getNumber_of_files(); ++i) {
+                    CustomListAdapter.Element elt = new CustomListAdapter.Element(stations.getInterpretedValue(i),
+                                                        "Le " + dates.getInterpretedValue(i) + " à " +
+                                                        times.getInterpretedValue(i),
+                                                        lines.getInterpretedValue(i));
+                    res.add(elt);
+                }
+            }
+        }
+        return res;
+    }
+
+    public ArrayList<CustomListAdapter.Element> getSpecialEvents() {
+        Node root = findNode(card_struct, "Special Events");
+        ArrayList<CustomListAdapter.Element> res = new ArrayList<> ();
+        if (root != null) {
+            Node result = findNode(root, "EventResult");
+            Node line = findNode(root, "EventRouteNumber");
+            Node dates = findNode(root, "EventDateStamp");
+            Node times = findNode(root, "EventTimeStamp");
+            if (line != null && result != null && dates != null && times != null) {
+                for (int i = 1; i <= result.getNumber_of_files(); ++i) {
+                    CustomListAdapter.Element elt = new CustomListAdapter.Element(result.getInterpretedValue(i),
+                            "Le " + dates.getInterpretedValue(i) + " à " +
+                                    times.getInterpretedValue(i),
+                            line.getInterpretedValue(i));
+                    res.add(elt);
+                }
             }
         }
         return res;
@@ -238,109 +301,212 @@ public class Navigo {
     private String dumpFinal(Node n, int file_number) {
         String value = n.getValue(file_number);
         String res = " > " + n.getName() + ": ";
+        String inter = "";
 
         switch (n.getFinalType()) {
             case DATE:
                 if (value.length() == 0) {
-                    res += "Empty date";
-                    break;
+                    n.setInterpretedValue("Empty date", file_number);
+                } else {
+                    int date_int = Integer.parseInt(value, 2);
+                    Calendar cal = GregorianCalendar.getInstance();
+                    cal.set(1997, Calendar.JANUARY, 1);
+                    cal.add(Calendar.DATE, date_int);
+                    SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+                    n.setInterpretedValue(sdf.format(cal.getTime()), file_number);
                 }
-                int date_int = Integer.parseInt(value, 2);
-                Calendar cal = GregorianCalendar.getInstance();
-                cal.set(1997, Calendar.JANUARY, 1);
-                cal.add(Calendar.DATE, date_int);
-                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-                n.setInterpretedValue(sdf.format(cal.getTime()), file_number);
                 res += n.getInterpretedValue(file_number);
                 break;
             case TIME:
+                String time = "";
                 if (value.length() == 0) {
-                    res += "Empty time";
-                    break;
+                    time = "Empty time";
+                } else {
+                    int time_int = Integer.parseInt(value, 2);
+                    if (time_int / 60 < 10)
+                        time += "0";
+                    time += time_int / 60;
+                    time += "H";
+                    if (time_int % 60 < 10)
+                        time += "0";
+                    time += time_int % 60;
                 }
-                int time_int = Integer.parseInt(value, 2);
-                if (time_int / 60 < 10)
-                    res += "0";
-                res += time_int / 60;
-                res += "H";
-                if (time_int % 60 < 10)
-                    res += "0";
-                res += time_int % 60;
+                n.setInterpretedValue(time, file_number);
+                res += n.getInterpretedValue(file_number);
                 break;
             case INTEGER:
                 if (value.length() == 0) {
-                    res += "Empty integer";
-                    break;
+                    n.setInterpretedValue("Empty integer", file_number);
+                } else {
+                    int val = Integer.parseInt(value, 2);
+                    n.setInterpretedValue(Integer.toString(val), file_number);
                 }
-                res += Integer.parseInt(value, 2);
+                res += n.getInterpretedValue(file_number);
                 break;
             case EVENT_SERVICE_PROVIDER:
                 int sp = Integer.parseInt(value, 2);
                 switch (sp) {
                     case 2:
-                        res += "SNCF";
+                        inter = "SNCF";
                         break;
                     case 3:
-                        res += "RATP";
+                        inter = "RATP";
                         break;
                     case 115:
-                        res += "CSO (VEOLIA)";
+                        inter = "CSO (VEOLIA)";
                         break;
                     case 116:
-                        res += "R'Bus (VEOLIA)";
+                        inter = "R'Bus (VEOLIA)";
                         break;
                     case 156:
-                        res += "Phebus";
+                        inter = "Phebus";
                         break;
                     default:
-                        res += "UNKOWN";
+                        inter = "UNKOWN";
                         break;
                 }
+                n.setInterpretedValue(inter, file_number);
+                res += inter;
                 break;
             case ROUTE_NUMBER:
-                /// TODO : Parse RER value
-                int ligne = Integer.parseInt(value, 2);
-                if (ligne == 103)
-                    n.setInterpretedValue("Ligne 3 bis", file_number);
-                else
-                    n.setInterpretedValue("Ligne " + ligne, file_number);
+                String transport = current_event_code.split(" ")[0];
+                if (transport.equals("Train") && Integer.parseInt(value, 2) > 16) {
+                    char rer_number = (char)(65 + Integer.parseInt(value, 2) - 17);
+                    n.setInterpretedValue("RER " + rer_number, file_number);
+                } else {
+                    int line = Integer.parseInt(value, 2);
+                    if (line == 103)
+                        n.setInterpretedValue("Ligne 3 bis", file_number);
+                    else
+                        n.setInterpretedValue("Ligne " + line, file_number);
+                }
                 res += n.getInterpretedValue(file_number);
                 break;
             case AMOUNT:
                 float amount = Integer.parseInt(value, 2);
-                res += amount / 100.0;
-                res += " euros";
+                inter += amount / 100.0;
+                inter += " euros";
+                n.setInterpretedValue(inter, file_number);
+                res += inter;
+                break;
+            case EVENT_DEVICE:
+                String tsprt = current_event_code.split(" ")[0];
+                if (!(tsprt.equals("Bus"))) {
+                    n.setInterpretedValue(Integer.toString(Integer.parseInt(value, 2)), file_number);
+                } else {
+                    int device = Integer.parseInt(value.substring(8), 2);
+                    int door = (device / 2) + 1;
+                    if (device % 2 == 0) {
+                        n.setInterpretedValue("Porte " + door + ", validateur droite", file_number);
+                    } else {
+                        n.setInterpretedValue("Porte " + door + ", validateur gauche", file_number);
+                    }
+                }
+                res += n.getInterpretedValue(file_number);
                 break;
             case EVENT_RESULT:
                 int result = Integer.parseInt(value, 2);
                 switch (result) {
                     case 48:
-                        res += "Double validation en entrée";
+                        inter += "Double validation en entrée";
                         break;
                     case 49:
-                        res += "Zone invalide";
+                        inter += "Zone invalide";
                         break;
                     case 53:
-                        res += "Abonnement périmé";
+                        inter += "Abonnement périmé";
                         break;
                     case 69:
-                        res += "Double validation en sortie";
+                        inter += "Double validation en sortie";
                         break;
                     default:
-                        res += "Unkown";
+                        inter += "Unkown";
                         break;
                 }
+                n.setInterpretedValue(inter, file_number);
+                res += inter;
+                break;
+            case EVENT_CODE:
+                int mode = Integer.parseInt(value.substring(0, 4), 2);
+                switch (mode) {
+                    case 1:
+                        inter += "Bus urbain : ";
+                        break;
+                    case 2:
+                        inter += "Bus interurbain : ";
+                        break;
+                    case 3:
+                        inter += "Métro : ";
+                        break;
+                    case 4:
+                        inter += "Tram : ";
+                        break;
+                    case 5:
+                        inter += "Train : ";
+                        break;
+                    case 8:
+                        inter += "Parking : ";
+                        break;
+                    default:
+                        inter += "Unknown : ";
+                        break;
+                }
+                int transaction = Integer.parseInt(value.substring(4, 8), 2);
+                switch (transaction) {
+                    case 0x1:
+                        inter += "Validation en entrée";
+                        break;
+                    case 0x2:
+                        inter += "Validation en sortie";
+                        break;
+                    case 0x4:
+                        inter += "Contrôle volant (à bord)";
+                        break;
+                    case 0x5:
+                        inter += "Validation de test";
+                        break;
+                    case 0x6:
+                        inter += "Validation en correspondance (entrée)";
+                        break;
+                    case 0x7:
+                        inter += "Validation en correspondance (sortie)";
+                        break;
+                    case 0x9:
+                        inter += "Annulation de validation";
+                        break;
+                    case 0xD:
+                        inter += "Distribution";
+                        break;
+                    case 0xF:
+                        inter += "Invalidation";
+                        break;
+                    default:
+                        inter += "Unknown";
+                        break;
+                }
+                n.setInterpretedValue(inter, file_number);
+                res += inter;
+                current_event_code = inter;
                 break;
             case LOCATION_ID:
+                String trsprt = current_event_code.split(" ")[0];
                 int zone = Integer.parseInt(value.substring(0,7), 2);
                 int location = Integer.parseInt(value.substring(7,12), 2);
                 String code = (zone < 10) ? "0" : "";
                 code += zone + "-";
                 code += (location < 10) ? "0" : "";
                 code += location;
-                res += stations.get(code);
+                if (trsprt.equals("Train")) {
+                    n.setInterpretedValue(train_stations.get(code), file_number);
+                } else if (trsprt.equals("Bus")) {
+                    n.setInterpretedValue("Arrêt bus " + Integer.toString(Integer.parseInt(value, 2)), file_number);
+                } else {
+                    n.setInterpretedValue(metro_stations.get(code), file_number);
+                }
+                res += n.getInterpretedValue(file_number);
                 break;
             default:
+                n.setInterpretedValue(value, file_number);
                 res += value;
                 break;
         }

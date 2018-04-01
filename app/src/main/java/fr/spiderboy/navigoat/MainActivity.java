@@ -10,6 +10,7 @@ import android.nfc.Tag;
 import android.nfc.tech.IsoDep;
 import android.nfc.tech.NfcB;
 import android.os.AsyncTask;
+import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
@@ -18,18 +19,24 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ViewSwitcher;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-
+import java.io.OutputStreamWriter;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class MainActivity extends ActionBarActivity {
 
     private NfcAdapter mNfcAdapter;
     public static final String dTag = "Navigoat";
-    private Navigo card;
+    private Navigo card = null;
     private CustomListAdapter listAdapter;
+
+    /// TODO: http://data.ratp.fr/api/datasets/1.0/indices-des-lignes-de-bus-du-reseau-ratp/attachments/indices_zip/
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,39 +48,29 @@ public class MainActivity extends ActionBarActivity {
         ListView lView = (ListView) findViewById(R.id.listView);
         listAdapter = new CustomListAdapter(this);
         lView.setAdapter(listAdapter);
-        listAdapter.add("Scan your card !");
-
-        /// Listener for verbose checkbox
-        SharedPreferences.OnSharedPreferenceChangeListener changeListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
-            @Override
-            public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-                if (key.equals("verbose_checkbox")) {
-                    ViewSwitcher switcher = (ViewSwitcher) findViewById(R.id.profileSwitcher);
-                    switcher.showNext();
-                }
-            }
-        };
 
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        if (!preferences.getBoolean("verbose_checkbox", true)) {
+        if (!preferences.getBoolean("verbose_checkbox", false)) {
             ViewSwitcher switcher = (ViewSwitcher) findViewById(R.id.profileSwitcher);
             switcher.showNext();
         }
-        preferences.registerOnSharedPreferenceChangeListener(changeListener);
 
         TextView mTextView = (TextView) findViewById(R.id.text_view_main);
         mTextView.setMovementMethod(new ScrollingMovementMethod());
 
         if (mNfcAdapter == null) {
             mTextView.setText("NFC not supported on this device. Go get a new one.\n");
+            listAdapter.add("NFC not supported on this device. Go get a new one.");
             finish();
             return;
         }
 
         if (!mNfcAdapter.isEnabled()) {
             mTextView.setText("NFC is not enabled. Go enable it.\n");
+            listAdapter.add("NFC is not enabled. Go enable it.");
         } else {
             mTextView.setText("Waiting for card...\n");
+            listAdapter.add("Waiting for card...");
         }
 
         handleIntent(getIntent());
@@ -86,11 +83,22 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
-    private void addElement(String text) {
-        listAdapter.add(text);
+    private void updateCustomList() {
+        listAdapter.add_header("Card information");
+        listAdapter.add("UID", card.getId());
+        listAdapter.add_header("Events");
+        for (CustomListAdapter.Element e: card.getEvents()) {
+            listAdapter.add(e);
+        }
+        listAdapter.add_header("Contracts");
+        for (CustomListAdapter.Element e: card.getContracts()) {
+            listAdapter.add(e);
+        }
+        listAdapter.add_header("Special events");
+        for (CustomListAdapter.Element e: card.getSpecialEvents()) {
+            listAdapter.add(e);
+        }
     }
-
-
 
     private void handleIntent(Intent intent) {
         String action = intent.getAction();
@@ -134,6 +142,19 @@ public class MainActivity extends ActionBarActivity {
          */
         stopForegroundDispatch(this, mNfcAdapter);
 
+        /// Listener for verbose checkbox
+        SharedPreferences.OnSharedPreferenceChangeListener changeListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+            @Override
+            public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+                if (key.equals("verbose_checkbox")) {
+                    ViewSwitcher switcher = (ViewSwitcher) findViewById(R.id.profileSwitcher);
+                    switcher.showNext();
+                }
+            }
+        };
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        preferences.unregisterOnSharedPreferenceChangeListener(changeListener);
+
         super.onPause();
     }
 
@@ -156,14 +177,58 @@ public class MainActivity extends ActionBarActivity {
             Intent i = new Intent(this, SettingsActivity.class);
             startActivityForResult(i, 0);
             return true;
+        } else if (id == R.id.action_dump) {
+            if (card != null && card.getDump() != "") {
+                try {
+                    String result_file = save_dump_file();
+                    Toast.makeText(getApplicationContext(), "Dump saved in " + result_file, Toast.LENGTH_LONG).show();
+                } catch (Exception e) {
+                    Toast.makeText(getApplicationContext(), "Error dumping your card content", Toast.LENGTH_LONG).show();
+                }
+            } else {
+                Toast.makeText(getApplicationContext(), "No card dump to save!", Toast.LENGTH_LONG).show();
+            }
         }
 
         return super.onOptionsItemSelected(item);
     }
 
+    private String save_dump_file() throws Exception {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        String path = preferences.getString("dumps_location", Environment.getExternalStorageDirectory().getPath() + "/Navigoat/");
+        File myFile = new File(path);
+        if (!myFile.exists()) {
+            myFile.mkdirs();
+        }
+        String cur_date = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss").format(new Date());
+        path = path + "/" + card.getId() + "-" + cur_date + ".txt";
+        myFile = new File(path);
+        myFile.createNewFile();
+        FileOutputStream fOut = new FileOutputStream(myFile);
+        OutputStreamWriter myOutWriter =
+                new OutputStreamWriter(fOut);
+        myOutWriter.append(card.getDump());
+        myOutWriter.close();
+        fOut.close();
+        return path;
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
+
+        /// Listener for verbose checkbox
+        SharedPreferences.OnSharedPreferenceChangeListener changeListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+            @Override
+            public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+                if (key.equals("verbose_checkbox")) {
+                    ViewSwitcher switcher = (ViewSwitcher) findViewById(R.id.profileSwitcher);
+                    switcher.showNext();
+                }
+            }
+        };
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        preferences.registerOnSharedPreferenceChangeListener(changeListener);
 
         /**
          * It's important, that the activity is in the foreground (resumed). Otherwise
@@ -232,11 +297,10 @@ public class MainActivity extends ActionBarActivity {
                                 card.parseIsoDep(isodep);
                                 addText("Dumping card...");
                                 card.dump();
-                                for (String elt : card.getElements())
-                                    addElement(elt);
+                                updateCustomList();
                             }
                         });
-                        wait(1000);
+                        wait(2000);
                         return card.getDump();
                     }
                 } catch (InterruptedException e) {
