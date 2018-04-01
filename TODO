@@ -1,0 +1,6 @@
+* Get logos from data.ratp.fr
+* Add Special events (fails and controls)
+* Find moar information about bus stops
+* Add contract type and data information
+* Add dump/load feature
+* Parse RER data
