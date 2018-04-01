@@ -10,6 +10,8 @@ This PoC will only work with the new Navigo models "Designed by Stark".
 
 Credit where it's due: https://github.com/Eric-Bourry/pssi
 
+Play Store: https://play.google.com/store/apps/details?id=fr.spiderboy.navigoat
+
 ## Permissions
 
 * NFC: Well... This would be difficult without this one.
