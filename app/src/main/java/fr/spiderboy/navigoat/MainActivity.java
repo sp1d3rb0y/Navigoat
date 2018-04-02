@@ -61,7 +61,6 @@ public class MainActivity extends ActionBarActivity {
         if (mNfcAdapter == null) {
             mTextView.setText("NFC not supported on this device. Go get a new one.\n");
             listAdapter.add("NFC not supported on this device. Go get a new one.");
-            finish();
             return;
         }
 
