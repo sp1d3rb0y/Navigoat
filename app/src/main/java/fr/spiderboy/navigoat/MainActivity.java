@@ -1,7 +1,9 @@
 package fr.spiderboy.navigoat;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.PendingIntent;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -10,8 +12,10 @@ import android.nfc.Tag;
 import android.nfc.tech.IsoDep;
 import android.nfc.tech.NfcB;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
@@ -35,6 +39,7 @@ public class MainActivity extends ActionBarActivity {
     public static final String dTag = "Navigoat";
     private Navigo card = null;
     private CustomListAdapter listAdapter;
+    private TextView mTextView;
 
     /// TODO: http://data.ratp.fr/api/datasets/1.0/indices-des-lignes-de-bus-du-reseau-ratp/attachments/indices_zip/
 
@@ -42,38 +47,6 @@ public class MainActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
-
-        ListView lView = (ListView) findViewById(R.id.listView);
-        listAdapter = new CustomListAdapter(this);
-        lView.setAdapter(listAdapter);
-
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        if (!preferences.getBoolean("verbose_checkbox", false)) {
-            ViewSwitcher switcher = (ViewSwitcher) findViewById(R.id.profileSwitcher);
-            switcher.showNext();
-        }
-
-        TextView mTextView = (TextView) findViewById(R.id.text_view_main);
-        mTextView.setMovementMethod(new ScrollingMovementMethod());
-
-        if (mNfcAdapter == null) {
-            mTextView.setText("NFC not supported on this device. Go get a new one.\n");
-            listAdapter.add("NFC not supported on this device. Go get a new one.");
-            finish();
-            return;
-        }
-
-        if (!mNfcAdapter.isEnabled()) {
-            mTextView.setText("NFC is not enabled. Go enable it.\n");
-            listAdapter.add("NFC is not enabled. Go enable it.");
-        } else {
-            mTextView.setText("Waiting for card...\n");
-            listAdapter.add("Waiting for card...");
-        }
-
-        handleIntent(getIntent());
     }
 
     private void addText(String text) {
@@ -213,9 +186,68 @@ public class MainActivity extends ActionBarActivity {
         return path;
     }
 
+    private void checkNFC() {
+        if (mNfcAdapter == null) {
+            mTextView.setText("NFC not supported on this device. Go get a new one.\n");
+            listAdapter.add("NFC not supported on this device. Go get a new one.");
+            return;
+        }
+
+        if (!mNfcAdapter.isEnabled()) {
+            mTextView.setText("NFC is not enabled. Go enable it.\n");
+            listAdapter.add("NFC is not enabled. Go enable it.");
+
+            AlertDialog.Builder alertbox = new AlertDialog.Builder(this);
+            alertbox.setTitle("Info");
+            alertbox.setMessage("NFC is not enabled. Go enable it");
+            alertbox.setPositiveButton("Turn On", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                        Intent intent = new Intent(Settings.ACTION_NFC_SETTINGS);
+                        startActivity(intent);
+                    } else {
+                        Intent intent = new Intent(Settings.ACTION_WIRELESS_SETTINGS);
+                        startActivity(intent);
+                    }
+                }
+            });
+            alertbox.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+
+                }
+            });
+            alertbox.show();
+        } else {
+            mTextView.setText("Waiting for card...\n");
+            listAdapter.add("Waiting for card...");
+        }
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
+
+        mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
+
+        ListView lView = (ListView) findViewById(R.id.listView);
+        listAdapter = new CustomListAdapter(this);
+        lView.setAdapter(listAdapter);
+
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        if (!preferences.getBoolean("verbose_checkbox", false)) {
+            ViewSwitcher switcher = (ViewSwitcher) findViewById(R.id.profileSwitcher);
+            switcher.showNext();
+        }
+
+        mTextView = (TextView) findViewById(R.id.text_view_main);
+        mTextView.setMovementMethod(new ScrollingMovementMethod());
+
+
+        checkNFC();
+        handleIntent(getIntent());
 
         /// Listener for verbose checkbox
         SharedPreferences.OnSharedPreferenceChangeListener changeListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
@@ -227,7 +259,6 @@ public class MainActivity extends ActionBarActivity {
                 }
             }
         };
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         preferences.registerOnSharedPreferenceChangeListener(changeListener);
 
         /**
