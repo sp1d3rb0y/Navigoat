@@ -153,8 +153,8 @@ public class Node {
     }
 
     public String getInterpretedValue(int file_number) {
-        if (value.size() < file_number)
-            return "";
+        if (interpretedValue.size() < file_number)
+            return getValue(file_number);
         return interpretedValue.get(file_number - 1);
     }
 
