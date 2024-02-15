@@ -2,11 +2,11 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/TP3_Calculator.iml" filepath="$PROJECT_DIR$/.idea/modules/TP3_Calculator.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/TP3_Calculator.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/TP3_Calculator.app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/TP3_Calculator.app.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/TP3_Calculator.app.androidTest.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/TP3_Calculator.app.main.iml" filepath="$PROJECT_DIR$/.idea/modules/app/TP3_Calculator.app.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/TP3_Calculator.app.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/TP3_Calculator.app.unitTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Navigoat.iml" filepath="$PROJECT_DIR$/.idea/modules/Navigoat.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/Navigoat.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/Navigoat.app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/Navigoat.app.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/Navigoat.app.androidTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/Navigoat.app.main.iml" filepath="$PROJECT_DIR$/.idea/modules/app/Navigoat.app.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/Navigoat.app.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/Navigoat.app.unitTest.iml" />
     </modules>
   </component>
 </project>

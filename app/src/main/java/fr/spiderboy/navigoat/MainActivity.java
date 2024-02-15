@@ -3,7 +3,6 @@ package fr.spiderboy.navigoat;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.PendingIntent;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -12,12 +11,12 @@ import android.nfc.Tag;
 import android.nfc.tech.IsoDep;
 import android.nfc.tech.NfcB;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ListView;
@@ -83,22 +82,11 @@ public class MainActivity extends AppCompatActivity {
             AlertDialog.Builder alertbox = new AlertDialog.Builder(this);
             alertbox.setTitle("Info");
             alertbox.setMessage("NFC is not enabled. Go enable it!");
-            alertbox.setPositiveButton("Turn On", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                        Intent intent = new Intent(Settings.ACTION_NFC_SETTINGS);
-                        startActivity(intent);
-                    } else {
-                        Intent intent = new Intent(Settings.ACTION_WIRELESS_SETTINGS);
-                        startActivity(intent);
-                    }
-                }
+            alertbox.setPositiveButton("Turn On", (dialog, which) -> {
+                Intent intent = new Intent(Settings.ACTION_NFC_SETTINGS);
+                startActivity(intent);
             });
-            alertbox.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) { }
-            });
+            alertbox.setNegativeButton("Cancel", (dialog, which) -> { });
             alertbox.show();
         } else {
             mTextView.setText("Waiting for card...\n");
@@ -132,6 +120,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void handleIntent(Intent intent) {
         String action = intent.getAction();
+        Log.d(MainActivity.dTag, "TOTO " + action + " VS " + NfcAdapter.ACTION_TECH_DISCOVERED);
         if (NfcAdapter.ACTION_TECH_DISCOVERED.equals(action)) {
             Tag tag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
             String sIsoDep = IsoDep.class.getName();
@@ -155,8 +144,8 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onNewIntent(Intent intent) {
-        /**
-         * This method gets called, when a new Intent gets associated with the current activity instance.
+        super.onNewIntent(intent);
+        /* This method gets called, when a new Intent gets associated with the current activity instance.
          * Instead of creating a new activity, onNewIntent will be called. For more information have a look
          * at the documentation.
          *
@@ -208,7 +197,7 @@ public class MainActivity extends AppCompatActivity {
             startActivityForResult(i, 0);
             return true;
         } else if (id == R.id.action_dump) {
-            if (card != null && card.getDump() != "") {
+            if (card != null && !"".equals(card.getDump())) {
                 try {
                     String result_file = save_dump_file();
                     Toast.makeText(getApplicationContext(), "Dump saved in " + result_file, Toast.LENGTH_LONG).show();
@@ -248,19 +237,16 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
 
         /// Listener for verbose checkbox
-        SharedPreferences.OnSharedPreferenceChangeListener changeListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
-            @Override
-            public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-                if (key.equals("verbose_checkbox")) {
-                    ViewSwitcher switcher = (ViewSwitcher) findViewById(R.id.profileSwitcher);
-                    switcher.showNext();
-                }
+        SharedPreferences.OnSharedPreferenceChangeListener changeListener = (sharedPreferences, key) -> {
+            if (key.equals("verbose_checkbox")) {
+                ViewSwitcher switcher = (ViewSwitcher) findViewById(R.id.profileSwitcher);
+                switcher.showNext();
             }
         };
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         preferences.registerOnSharedPreferenceChangeListener(changeListener);
 
-        /**
+        /*
          * It's important, that the activity is in the foreground (resumed). Otherwise
          * an IllegalStateException is thrown.
          */
@@ -275,7 +261,7 @@ public class MainActivity extends AppCompatActivity {
         final Intent intent = new Intent(activity.getApplicationContext(), activity.getClass());
         intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
 
-        final PendingIntent pendingIntent = PendingIntent.getActivity(activity.getApplicationContext(), 0, intent, 0);
+        final PendingIntent pendingIntent = PendingIntent.getActivity(activity.getApplicationContext(), 0, intent, PendingIntent.FLAG_MUTABLE);
 
         IntentFilter[] filters = new IntentFilter[1];
         String[][] techList = new String[][]{
@@ -319,16 +305,13 @@ public class MainActivity extends AppCompatActivity {
             if (isodep.isConnected()) {
                 try {
                     synchronized (this) {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                addText("Connected!");
-                                addText("Parsing card...");
-                                card.parseIsoDep(isodep);
-                                addText("Dumping card...");
-                                card.dump();
-                                updateCustomList();
-                            }
+                        runOnUiThread(() -> {
+                            addText("Connected!");
+                            addText("Parsing card...");
+                            card.parseIsoDep(isodep);
+                            addText("Dumping card...");
+                            card.dump();
+                            updateCustomList();
                         });
                         wait(2000);
                         return card.getDump();
