@@ -4,3 +4,6 @@
 * Add contract type and data information
 * Add dump/load feature
 * Parse RER data
+
+
+    /// TODO: http://data.ratp.fr/api/datasets/1.0/indices-des-lignes-de-bus-du-reseau-ratp/attachments/indices_zip/
