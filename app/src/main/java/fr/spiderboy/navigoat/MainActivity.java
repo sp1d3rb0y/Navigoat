@@ -48,17 +48,17 @@ public class MainActivity extends AppCompatActivity {
 
         mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
 
-        mTextView = (TextView) findViewById(R.id.text_view_main);
+        mTextView = findViewById(R.id.text_view_main);
         mTextView.setMovementMethod(new ScrollingMovementMethod());
 
-        ListView lView = (ListView) findViewById(R.id.listView);
+        ListView lView = findViewById(R.id.listView);
         listAdapter = new CustomListAdapter(this);
         lView.setAdapter(listAdapter);
 
         /// TODO: Better verbose/non-verbose switcher handling
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         if (!preferences.getBoolean("verbose_checkbox", false)) {
-            ViewSwitcher switcher = (ViewSwitcher) findViewById(R.id.profileSwitcher);
+            ViewSwitcher switcher = findViewById(R.id.profileSwitcher);
             switcher.reset();
             switcher.showNext();
         }
@@ -95,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void addText(String text) {
-        TextView mTextView = (TextView) findViewById(R.id.text_view_main);
+        TextView mTextView = findViewById(R.id.text_view_main);
         if (mTextView != null) {
             mTextView.append(text + "\n");
         }
@@ -127,7 +127,7 @@ public class MainActivity extends AppCompatActivity {
             String sNfcB = NfcB.class.getName();
             for (String tech : tag.getTechList()) {
                 if (tech.equals(sIsoDep) || tech.equals(sNfcB)) {
-                    TextView mTextView = (TextView) findViewById(R.id.text_view_main);
+                    TextView mTextView = findViewById(R.id.text_view_main);
                     mTextView.setText("Waiting for card...\n");
                     listAdapter.clear();
                     card = new Navigo(tag.getId(), getResources().getXml(R.xml.card_struct),
@@ -156,19 +156,16 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
-        /**
+        /*
          * Call this before onPause, otherwise an IllegalArgumentException is thrown as well.
          */
         stopForegroundDispatch(this, mNfcAdapter);
 
         /// Listener for verbose checkbox
-        SharedPreferences.OnSharedPreferenceChangeListener changeListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
-            @Override
-            public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-                if (key.equals("verbose_checkbox")) {
-                    ViewSwitcher switcher = (ViewSwitcher) findViewById(R.id.profileSwitcher);
-                    switcher.showNext();
-                }
+        SharedPreferences.OnSharedPreferenceChangeListener changeListener = (sharedPreferences, key) -> {
+            if (key.equals("verbose_checkbox")) {
+                ViewSwitcher switcher = findViewById(R.id.profileSwitcher);
+                switcher.showNext();
             }
         };
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
@@ -239,7 +236,7 @@ public class MainActivity extends AppCompatActivity {
         /// Listener for verbose checkbox
         SharedPreferences.OnSharedPreferenceChangeListener changeListener = (sharedPreferences, key) -> {
             if (key.equals("verbose_checkbox")) {
-                ViewSwitcher switcher = (ViewSwitcher) findViewById(R.id.profileSwitcher);
+                ViewSwitcher switcher = findViewById(R.id.profileSwitcher);
                 switcher.showNext();
             }
         };

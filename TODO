@@ -1,3 +1,9 @@
+Android 13 port :
+* Android 13 support for dumps (->> new Storage permission)
+* Use of Immutable Intent (using readerMode instead of intents)
+* Refactor deprecated PreferenceActivity for settings view
+
+General :
 * Get logos from data.ratp.fr
 * Add Special events (fails and controls)
 * Find moar information about bus stops
