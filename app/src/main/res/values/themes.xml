@@ -1,0 +1,8 @@
+<resources>
+    <style name="Theme.Navigoat" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/purple_dark</item>
+        <item name="colorSecondary">@color/purple_light</item>
+        <item name="android:windowBackground">@color/purple_light</item>
+        <item name="android:statusBarColor">@color/purple_dark</item>
+    </style>
+</resources>
